@@ -17,7 +17,7 @@ y == 20;
 	p := New(l)
 	p.ParseProgram()
 
-	expectedLen := 2
+	expectedLen := 1
 
 	testingutils.Equals(t, expectedLen, len(p.errors), "parser.errors")
 }
@@ -54,6 +54,44 @@ x123 = 99999;
 		testingutils.Equals(t, name, assignment.Name.Value, "s.Name.Value")
 		testingutils.Equals(t, name, assignment.Name.TokenLiteral(), "s.Name")
 	}
+}
+
+func TestIdentifierExpression(t *testing.T) {
+	input := "myVar;"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	assertNoParseErrors(t, p)
+	testingutils.Equals(t, 1, len(program.Statements), "len(program.Statements)")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	exp := "myVar"
+	testingutils.Assert(t, ok, "smt not *ast.Identifier. got=%T", stmt.Expression)
+	testingutils.Equals(t, exp, ident.Value, "ident.Value")
+	testingutils.Equals(t, exp, ident.TokenLiteral(), "ident.TokenLiteral()")
+}
+
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "10;"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	assertNoParseErrors(t, p)
+	testingutils.Equals(t, 1, len(program.Statements), "len(program.Statements)")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	exp := int64(10)
+	testingutils.Assert(t, ok, "stmt not *ast.IntegerLiteral. got=%T", stmt.Expression)
+	testingutils.Equals(t, exp, literal.Value, "literal.Value")
+
+	exp2 := "10"
+	testingutils.Equals(t, exp2, literal.TokenLiteral(), "literal.TokenLiteral()")
 }
 
 func assertNoParseErrors(t *testing.T, p *Parser) {
