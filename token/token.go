@@ -12,6 +12,7 @@ const (
 	EOF
 
 	IDENTIFIER
+	ASSIGNMENT
 
 	INT
 
@@ -33,6 +34,7 @@ var tokenNames = []string{
 	"EOF",     //	EOF
 
 	"IDENTIFIER", // IDENTIFIER
+	"ASSIGNMENT", // ASSIGNMENT
 
 	"INT", // INT
 
