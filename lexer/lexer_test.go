@@ -6,16 +6,28 @@ import (
 )
 
 func TestNextToken(t *testing.T) {
-	input := `=+(),;`
+	input := `
+x = 3 + 5^3; (3 * 8 ); x;
+    `
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
+		{token.IDENTIFIER, "x"},
 		{token.ASSIGN, "="},
+		{token.INT, "3"},
 		{token.PLUS, "+"},
+		{token.INT, "5"},
+		{token.CARET, "^"},
+		{token.INT, "3"},
+		{token.SEMICOLON, ";"},
 		{token.LPAREN, "("},
+		{token.INT, "3"},
+		{token.ASTERISK, "*"},
+		{token.INT, "8"},
 		{token.RPAREN, ")"},
-		{token.COMMA, ","},
+		{token.SEMICOLON, ";"},
+		{token.IDENTIFIER, "x"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}

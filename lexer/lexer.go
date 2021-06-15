@@ -29,6 +29,17 @@ func (l *Lexer) readChar() {
 }
 
 func (l *Lexer) NextToken() token.Token {
+
+	l.eatWhitespaces()
+
+	if isLetter(l.ch) {
+		return token.Token{Type: token.IDENTIFIER, Literal: l.readWhile(isLetter)}
+	}
+
+	if isNumber(l.ch) {
+		return token.Token{Type: token.INT, Literal: l.readWhile(isNumber)}
+	}
+
 	defer l.readChar()
 
 	switch l.ch {
@@ -44,9 +55,40 @@ func (l *Lexer) NextToken() token.Token {
 		return token.New(token.COMMA, l.ch)
 	case '+':
 		return token.New(token.PLUS, l.ch)
+	case '-':
+		return token.New(token.MINUS, l.ch)
+	case '*':
+		return token.New(token.ASTERISK, l.ch)
+	case '^':
+		return token.New(token.CARET, l.ch)
 	case 0:
 		return token.Token{Type: token.EOF, Literal: ""}
 	}
 
 	return token.New(token.ILLEGAL, l.ch)
+}
+
+type bytePredicate func(ch byte) bool
+
+func (l *Lexer) readWhile(pred bytePredicate) string {
+	start := l.position
+	for pred(l.ch) {
+		l.readChar()
+	}
+
+	return l.input[start:l.position]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isNumber(ch byte) bool {
+	return '0' <= ch && ch <= '9'
+}
+
+func (l *Lexer) eatWhitespaces() {
+	for l.ch == ' ' || l.ch == '\n' || l.ch == '\r' || l.ch == '\t' {
+		l.readChar()
+	}
 }

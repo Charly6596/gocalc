@@ -11,6 +11,10 @@ const (
 	ILLEGAL TokenType = iota
 	EOF
 
+	IDENTIFIER
+
+	INT
+
 	SEMICOLON
 	COMMA
 	LPAREN
@@ -27,6 +31,10 @@ const (
 var tokenNames = []string{
 	"ILLEGAL", //	ILLEGAL
 	"EOF",     //	EOF
+
+	"IDENTIFIER", // IDENTIFIER
+
+	"INT", // INT
 
 	/* DELIMITERS */
 	";", // SEMICOLON
