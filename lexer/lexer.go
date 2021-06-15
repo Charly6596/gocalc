@@ -32,12 +32,12 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.eatWhitespaces()
 
-	if isLetter(l.ch) {
-		return token.Token{Type: token.IDENTIFIER, Literal: l.readWhile(isLetter)}
+	if isDigit(l.ch) {
+		return token.Token{Type: token.INT, Literal: l.readWhile(isDigit)}
 	}
 
-	if isNumber(l.ch) {
-		return token.Token{Type: token.INT, Literal: l.readWhile(isNumber)}
+	if isLetter(l.ch) {
+		return token.Token{Type: token.IDENTIFIER, Literal: l.readWhile(isLetter)}
 	}
 
 	defer l.readChar()
@@ -79,12 +79,12 @@ func (l *Lexer) readWhile(pred bytePredicate) string {
 	return l.input[start:l.position]
 }
 
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }
 
-func isNumber(ch byte) bool {
-	return '0' <= ch && ch <= '9'
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || isDigit(ch)
 }
 
 func (l *Lexer) eatWhitespaces() {
