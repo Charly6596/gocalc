@@ -1,6 +1,8 @@
 package ast
 
-import "gocalc/token"
+import (
+	"gocalc/token"
+)
 
 type ExpressionStatement struct {
 	Token      token.Token // the first token of the expression
