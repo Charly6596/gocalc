@@ -1,6 +1,8 @@
 package ast
 
-import "gocalc/token"
+import (
+	"gocalc/token"
+)
 
 type IntegerLiteral struct {
 	Token token.Token

@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"gocalc/ast"
 	"gocalc/lexer"
 	"gocalc/object"
 	"gocalc/parser"
@@ -18,12 +19,59 @@ func TestErrorHandling(t *testing.T) {
 			"5 / 0",
 			fmt.Sprintf(object.DIVIDE_BY_ZERO, 5, 0),
 		},
+		{
+			"a",
+			fmt.Sprintf(object.IDENTIFIER_NOT_FOUND_ERROR, "a"),
+		},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		errObj, ok := evaluated.(*object.Error)
 		testingutils.Assert(t, ok, "no error object returned, got %T", evaluated)
 		testingutils.Equals(t, tt.expectedMessage, errObj.Message, "Error message")
+	}
+}
+
+func TestAnsExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"a = 5; a;", 5},
+		{"a = 5 * 5; a;", 25},
+		{"a = 5; b = a; b;", 5},
+		{"a = 5; b = a; c = a + b + 5; c;", 15},
+	}
+	for _, tt := range tests {
+		env := NewEnvironment()
+		program := parseInput(tt.input)
+		env.Eval(program)
+		program = parseInput(ANS)
+		res := env.Eval(program)
+
+		testIntegerObject(t, res, tt.expected)
+	}
+
+}
+
+func parseInput(input string) *ast.Program {
+	l := lexer.New(input)
+	p := parser.New(l)
+	return p.ParseProgram()
+}
+
+func TestAssignmentStatement(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"a = 5; a;", 5},
+		{"a = 5 * 5; a;", 25},
+		{"a = 5; b = a; b;", 5},
+		{"a = 5; b = a; c = a + b + 5; c;", 15},
+	}
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }
 
@@ -61,7 +109,8 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	return Eval(program)
+	env := NewEnvironment()
+	return env.Eval(program)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) {

@@ -1,6 +1,8 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const DIVIDE_BY_ZERO = "Cannot divide by zero (%d / %d)"
 
