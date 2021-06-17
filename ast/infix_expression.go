@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"gocalc/object"
 	"gocalc/token"
 )
 
@@ -12,8 +13,9 @@ type InfixExpression struct {
 	Left     Expression
 }
 
-func (ie *InfixExpression) expressionNode()      {}
-func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) expressionNode()                    {}
+func (ie *InfixExpression) TokenLiteral() string               { return ie.Token.Literal }
+func (ie *InfixExpression) Accept(v NodeVisitor) object.Object { return v.InfixExpression(ie) }
 func (ie *InfixExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("(")

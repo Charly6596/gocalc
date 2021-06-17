@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"gocalc/object"
 	"gocalc/token"
 )
 
@@ -13,6 +14,11 @@ type PrefixExpression struct {
 
 func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+
+func (pe *PrefixExpression) Accept(visit NodeVisitor) object.Object {
+	return visit.PrefixExpression(pe)
+}
+
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("(")

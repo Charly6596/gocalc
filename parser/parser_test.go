@@ -8,6 +8,28 @@ import (
 	"testing"
 )
 
+func TestCallExpressionParsing(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5);"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	assertNoParseErrors(t, p)
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
+			1, len(program.Statements))
+	}
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	exp, ok := stmt.Expression.(*ast.CallExpression)
+	testingutils.Assert(t, ok, "stmt.Expression not *ast.PrefixExpression. got=%T", stmt.Expression)
+
+	testIdentifier(t, exp.Function, "add")
+	testingutils.Equals(t, 3, len(exp.Arguments), "exp.Arguments")
+	testLiteralExpression(t, exp.Arguments[0], 1)
+	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+}
 func TestErrorMessages(t *testing.T) {
 	input := `
 x = 15;
@@ -70,11 +92,8 @@ func TestIdentifierExpression(t *testing.T) {
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-	ident, ok := stmt.Expression.(*ast.Identifier)
 	exp := "myVar"
-	testingutils.Assert(t, ok, "smt not *ast.Identifier. got=%T", stmt.Expression)
-	testingutils.Equals(t, exp, ident.Value, "ident.Value")
-	testingutils.Equals(t, exp, ident.TokenLiteral(), "ident.TokenLiteral()")
+	testIdentifier(t, stmt.Expression, exp)
 }
 
 func TestFloatLiteralExpression(t *testing.T) {
@@ -160,11 +179,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		testingutils.Assert(t, ok, "s not *ast.ExpressionStatement. got=%T", program.Statements[0])
 
-		exp, ok := stmt.Expression.(*ast.InfixExpression)
-		testingutils.Assert(t, ok, "stmt.Expression not *ast.PrefixExpression. got=%T", stmt.Expression)
-		testingutils.Equals(t, it.operator, exp.Operator, "exp.Operator")
-		testFloatLiteral(t, exp.Right, it.rightValue)
-		testFloatLiteral(t, exp.Left, it.leftValue)
+		testInfixExpression(t, stmt.Expression, it.leftValue, it.operator, it.rightValue)
 	}
 }
 
@@ -232,6 +247,18 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"3.05 + 4; -5.3 * 5.33",
 			"(3.05 + 4)((-5.3) * 5.33)",
 		},
+		{
+			"a + add(b * c) + d",
+			"((a + add((b * c))) + d)",
+		},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
+		{
+			"add(a + b + c * d / f + g)",
+			"add((((a + b) + ((c * d) / f)) + g))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -242,4 +269,40 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		actual := program.String()
 		testingutils.Equals(t, tt.expected, actual, "program.String()")
 	}
+}
+
+func testIdentifier(t *testing.T, expression ast.Expression, expected string) {
+	ident, ok := expression.(*ast.Identifier)
+	testingutils.Assert(t, ok, "smt not *ast.Identifier. got=%T", expression)
+	testingutils.Equals(t, expected, ident.Value, "ident.Value")
+	testingutils.Equals(t, expected, ident.TokenLiteral(), "ident.TokenLiteral()")
+}
+
+func testLiteralExpression(
+	t *testing.T,
+	exp ast.Expression,
+	expected interface{},
+) {
+	switch v := expected.(type) {
+	case int:
+	case int64:
+	case float32:
+		testFloatLiteral(t, exp, float64(v))
+	case float64:
+		testFloatLiteral(t, exp, v)
+	case string:
+		testIdentifier(t, exp, v)
+	default:
+		t.Errorf("type of exp not handled. got=%T", expected)
+	}
+}
+
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
+	operator string, right interface{}) {
+
+	res, ok := exp.(*ast.InfixExpression)
+	testingutils.Assert(t, ok, "stmt.Expression not *ast.PrefixExpression. got=%T", exp)
+	testingutils.Equals(t, operator, res.Operator, "exp.Operator")
+	testLiteralExpression(t, res.Right, right)
+	testLiteralExpression(t, res.Left, left)
 }

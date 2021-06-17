@@ -13,7 +13,7 @@ x1 = 3 + 5^3; (3 * 8 ); x1; 0.5; .5
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-		{token.IDENTIFIER, "x1"},
+		{token.IDENT, "x1"},
 		{token.ASSIGN, "="},
 		{token.FLOAT, "3"},
 		{token.PLUS, "+"},
@@ -27,7 +27,7 @@ x1 = 3 + 5^3; (3 * 8 ); x1; 0.5; .5
 		{token.FLOAT, "8"},
 		{token.RPAREN, ")"},
 		{token.SEMICOLON, ";"},
-		{token.IDENTIFIER, "x1"},
+		{token.IDENT, "x1"},
 		{token.SEMICOLON, ";"},
 		{token.FLOAT, "0.5"},
 		{token.SEMICOLON, ";"},

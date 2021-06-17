@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"gocalc/object"
 	"gocalc/token"
 )
 
@@ -13,6 +14,11 @@ type AssignmentStatement struct {
 
 func (ae *AssignmentStatement) statementNode()       {}
 func (ae *AssignmentStatement) TokenLiteral() string { return ae.Token.Literal }
+
+func (ae *AssignmentStatement) Accept(visit NodeVisitor) object.Object {
+	return visit.AssignmentStatement(ae)
+}
+
 func (ae *AssignmentStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(ae.Name.String())

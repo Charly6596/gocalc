@@ -2,11 +2,24 @@ package ast
 
 import (
 	"bytes"
+	"gocalc/object"
 )
+
+type NodeVisitor interface {
+	Program(*Program) object.Object
+	Identifier(*Identifier) object.Object
+	FloatLiteral(*FloatLiteral) object.Object
+	AssignmentStatement(*AssignmentStatement) object.Object
+	ExpressionStatement(*ExpressionStatement) object.Object
+	PrefixExpression(*PrefixExpression) object.Object
+	InfixExpression(*InfixExpression) object.Object
+	CallExpression(*CallExpression) object.Object
+}
 
 type Node interface {
 	TokenLiteral() string
 	String() string
+	Accept(visit NodeVisitor) object.Object
 }
 
 type Statement interface {
@@ -29,6 +42,10 @@ func (p *Program) TokenLiteral() string {
 	} else {
 		return ""
 	}
+}
+
+func (p *Program) Accept(visit NodeVisitor) object.Object {
+	return visit.Program(p)
 }
 
 func (p *Program) String() string {

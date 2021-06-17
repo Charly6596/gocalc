@@ -3,8 +3,12 @@ package evaluator
 import (
 	"fmt"
 	"gocalc/ast"
+	"gocalc/environment"
+	"gocalc/lexer"
 	"gocalc/object"
+	"gocalc/parser"
 	"math"
+	"strings"
 )
 
 var (
@@ -12,85 +16,115 @@ var (
 	ANS  = "ans"
 )
 
-type Environment struct {
-	store map[string]object.Object
+type Evaluator struct {
+	global *environment.Environment
+	lexer  *lexer.Lexer
+	parser *parser.Parser
 }
 
-func NewEnvironment() *Environment {
-	s := make(map[string]object.Object)
-	return &Environment{store: s}
+func New() *Evaluator {
+	ev := &Evaluator{}
+	ev.global = environment.New()
+	return ev
 }
 
-func (e *Environment) Get(name string) (object.Object, bool) {
-	obj, ok := e.store[name]
-	return obj, ok
-}
-func (e *Environment) Set(name string, val object.Object) object.Object {
-	e.store[name] = val
-	return val
-}
+func (ev *Evaluator) Eval(input string) object.Object {
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	program := parser.ParseProgram()
 
-func (e *Environment) String() string {
-	return fmt.Sprint(e.store)
-}
-
-func (e *Environment) Eval(program ast.Node) object.Object {
-	res := eval(program, e)
-	if !isError(res) && res != nil {
-		e.Set(ANS, res)
+	if parser.HasErrors() {
+		errs := strings.Join(parser.Errors(), "\n\t\t")
+		return newError(object.SYNTAX_ERROR, errs)
 	}
 
+	res := ev.Program(program)
+	if !isError(res) {
+		ev.global.Set(ANS, res)
+	}
 	return res
 }
 
-func eval(node ast.Node, env *Environment) object.Object {
-	switch node := node.(type) {
-	case *ast.Program:
-		return evalProgram(node, env)
-	case *ast.AssignmentStatement:
-		val := eval(node.Value, env)
-		if isError(val) {
-			return val
+func (ev *Evaluator) Program(program *ast.Program) object.Object {
+	var result object.Object
+	for _, statement := range program.Statements {
+		result = ev.evaluate(statement)
+		switch result := result.(type) {
+		case *object.Error:
+			return result
 		}
-		env.Set(node.Name.Value, val)
-		return nil
-	case *ast.Identifier:
-		return evalIdentifier(node, env)
-	case *ast.ExpressionStatement:
-		return eval(node.Expression, env)
-	case *ast.PrefixExpression:
-		r := eval(node.Right, env)
-		if isError(r) {
-			return r
-		}
-
-		return evalPrefixExpression(node.Operator, r)
-	case *ast.InfixExpression:
-		r := eval(node.Right, env)
-		if isError(r) {
-			return r
-		}
-
-		l := eval(node.Left, env)
-		if isError(l) {
-			return l
-		}
-
-		return evalInfixExpression(node.Operator, l, r)
-	case *ast.FloatLiteral:
-		return &object.Float{Value: node.Value}
 	}
-	return NULL
+	return result
 }
 
-func evalIdentifier(node *ast.Identifier, env *Environment) object.Object {
-	val, ok := env.Get(node.Value)
+func (ev *Evaluator) Identifier(id *ast.Identifier) object.Object {
+	val, ok := ev.global.Get(id.Value)
 
 	if !ok {
-		return newError(object.IDENTIFIER_NOT_FOUND_ERROR, node.Value)
+		return newError(object.IDENTIFIER_NOT_FOUND_ERROR, id.Value)
 	}
 
 	return val
+}
+
+func (ev *Evaluator) FloatLiteral(fl *ast.FloatLiteral) object.Object {
+	return &object.Float{Value: fl.Value}
+}
+
+func (ev *Evaluator) AssignmentStatement(as *ast.AssignmentStatement) object.Object {
+	val := ev.evaluate(as.Value)
+	if isError(val) {
+		return val
+	}
+
+	ev.global.Set(as.Name.Value, val)
+
+	return NULL
+}
+
+func (ev *Evaluator) ExpressionStatement(es *ast.ExpressionStatement) object.Object {
+	return ev.evaluate(es.Expression)
+}
+
+func (ev *Evaluator) PrefixExpression(pe *ast.PrefixExpression) object.Object {
+	r := ev.evaluate(pe.Right)
+
+	if isError(r) {
+		return r
+	}
+
+	return evalPrefixExpression(pe.Operator, r)
+
+}
+
+func (ev *Evaluator) InfixExpression(ie *ast.InfixExpression) object.Object {
+	r := ev.evaluate(ie.Right)
+
+	if isError(r) {
+		return r
+	}
+
+	l := ev.evaluate(ie.Left)
+
+	if isError(l) {
+		return l
+	}
+
+	return evalInfixExpression(ie.Operator, l, r)
+}
+
+func (ev *Evaluator) CallExpression(ce *ast.CallExpression) object.Object {
+	val, ok := ev.global.Get(ce.Function.TokenLiteral())
+
+	if !ok {
+		return newError(object.IDENTIFIER_NOT_FOUND_ERROR, ce.Function.TokenLiteral())
+	}
+
+	return val
+}
+
+func (ev *Evaluator) evaluate(node ast.Node) object.Object {
+	return node.Accept(ev)
 }
 
 func isError(obj object.Object) bool {
@@ -148,18 +182,6 @@ func evalMinusOperator(right object.Object) object.Object {
 	}
 
 	return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, "-", right.Type())
-}
-
-func evalProgram(program *ast.Program, env *Environment) object.Object {
-	var result object.Object
-	for _, statement := range program.Statements {
-		result = eval(statement, env)
-		switch result := result.(type) {
-		case *object.Error:
-			return result
-		}
-	}
-	return result
 }
 
 func newError(msg string, v ...interface{}) *object.Error {

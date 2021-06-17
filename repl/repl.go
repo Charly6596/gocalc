@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"gocalc/evaluator"
-	"gocalc/lexer"
-	"gocalc/parser"
 	"io"
 )
 
@@ -13,7 +11,7 @@ const PROMPT = ">>> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := evaluator.NewEnvironment()
+	ev := evaluator.New()
 
 	for {
 		fmt.Printf(PROMPT)
@@ -25,26 +23,11 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 
-		l := lexer.New(line)
-		p := parser.New(l)
+		res := ev.Eval(line)
 
-		program := p.ParseProgram()
-
-		if len(p.Errors()) != 0 {
-			printParserErrors(out, p.Errors())
-			continue
-		}
-
-		evaluated := env.Eval(program)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.String())
+		if res != nil {
+			io.WriteString(out, res.String())
 			io.WriteString(out, "\n")
 		}
-	}
-}
-
-func printParserErrors(out io.Writer, errors []string) {
-	for _, msg := range errors {
-		io.WriteString(out, "Parser error: "+msg+"\n")
 	}
 }

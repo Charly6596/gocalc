@@ -8,13 +8,11 @@ type Float struct {
 	Value float64
 }
 
-func (i *Float) String() string {
-	return fmt.Sprint(i.Value)
-}
+func (f *Float) String() string { return fmt.Sprint(f.Value) }
 
-func (i *Float) Type() ObjectType {
-	return FLOAT
-}
+func (f *Float) Type() ObjectType { return FLOAT }
+
+func (f *Float) Is(t ObjectType) bool { return f.Type() == t }
 
 func ToFloat(o Object) (*Float, bool) {
 	inte, ok := o.(*Float)

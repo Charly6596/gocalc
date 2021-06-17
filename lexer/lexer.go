@@ -41,7 +41,7 @@ func (l *Lexer) NextToken() token.Token {
 	}
 
 	if isLetter(l.ch) {
-		return token.Token{Type: token.IDENTIFIER, Literal: l.readWhile(isLetter)}
+		return token.Token{Type: token.IDENT, Literal: l.readWhile(isLetter)}
 	}
 
 	defer l.readChar()

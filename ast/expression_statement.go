@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"gocalc/object"
 	"gocalc/token"
 )
 
@@ -16,4 +17,8 @@ func (es *ExpressionStatement) String() string {
 		return es.Expression.String()
 	}
 	return ""
+}
+
+func (es *ExpressionStatement) Accept(visit NodeVisitor) object.Object {
+	return visit.ExpressionStatement(&ExpressionStatement{Token: es.Token, Expression: es.Expression})
 }

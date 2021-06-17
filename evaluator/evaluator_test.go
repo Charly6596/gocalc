@@ -2,10 +2,7 @@ package evaluator
 
 import (
 	"fmt"
-	"gocalc/ast"
-	"gocalc/lexer"
 	"gocalc/object"
-	"gocalc/parser"
 	"gocalc/testing_utils"
 	"testing"
 )
@@ -43,21 +40,12 @@ func TestAnsExpression(t *testing.T) {
 		{"a = 5; b = a; c = a + b + 5; c;", 15},
 	}
 	for _, tt := range tests {
-		env := NewEnvironment()
-		program := parseInput(tt.input)
-		env.Eval(program)
-		program = parseInput(ANS)
-		res := env.Eval(program)
-
+		ev := New()
+		ev.Eval(tt.input)
+		res := ev.Eval(ANS)
 		testFloatObject(t, res, tt.expected)
 	}
 
-}
-
-func parseInput(input string) *ast.Program {
-	l := lexer.New(input)
-	p := parser.New(l)
-	return p.ParseProgram()
 }
 
 func TestAssignmentStatement(t *testing.T) {
@@ -106,11 +94,9 @@ func TestEvalFloatExpression(t *testing.T) {
 }
 
 func testEval(input string) object.Object {
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	env := NewEnvironment()
-	return env.Eval(program)
+	ev := New()
+	res := ev.Eval(input)
+	return res
 }
 
 func testFloatObject(t *testing.T, obj object.Object, expected float64) {
