@@ -77,10 +77,9 @@ func eval(node ast.Node, env *Environment) object.Object {
 		}
 
 		return evalInfixExpression(node.Operator, l, r)
-	case *ast.IntegerLiteral:
-		return &object.Integer{Value: node.Value}
+	case *ast.FloatLiteral:
+		return &object.Float{Value: node.Value}
 	}
-
 	return NULL
 }
 
@@ -100,35 +99,35 @@ func isError(obj object.Object) bool {
 
 func evalInfixExpression(operator string, left, right object.Object) object.Object {
 	switch {
-	case isInteger(left) && isInteger(right):
-		return evalInfixExpressionInteger(operator, left, right)
+	case isFloat(left) && isFloat(right):
+		return evalInfixExpressionFloat(operator, left, right)
 	default:
 		return newError(object.UNKNOWN_INFIX_OPERATOR_ERROR, left.Type(), operator, right.Type())
 	}
 }
 
-func isInteger(obj object.Object) bool {
-	return obj.Type() == object.INTEGER
+func isFloat(obj object.Object) bool {
+	return obj.Type() == object.FLOAT
 }
 
-func evalInfixExpressionInteger(operator string, left, right object.Object) object.Object {
-	x1, x2 := left.(*object.Integer).Value, right.(*object.Integer).Value
+func evalInfixExpressionFloat(operator string, left, right object.Object) object.Object {
+	x1, x2 := left.(*object.Float).Value, right.(*object.Float).Value
 
 	switch operator {
 	case "+":
-		return &object.Integer{Value: x1 + x2}
+		return &object.Float{Value: x1 + x2}
 	case "-":
-		return &object.Integer{Value: x1 - x2}
+		return &object.Float{Value: x1 - x2}
 	case "*":
-		return &object.Integer{Value: x1 * x2}
+		return &object.Float{Value: x1 * x2}
 	case "^":
-		return &object.Integer{Value: int64(math.Pow(float64(x1), float64(x2)))}
+		return &object.Float{Value: math.Pow(x1, x2)}
 	case "/":
 		if x2 == 0 {
-			return object.DivideByZeroError(x1, x2)
+			return object.DivideByZeroError(left, right)
 		}
 
-		return &object.Integer{Value: x1 / x2}
+		return &object.Float{Value: x1 / x2}
 	}
 
 	return newError(object.UNKNOWN_INFIX_OPERATOR_ERROR, left.Type(), operator, right.Type())
@@ -144,8 +143,8 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 }
 
 func evalMinusOperator(right object.Object) object.Object {
-	if num, ok := object.ToInteger(right); ok {
-		return &object.Integer{Value: -num.Value}
+	if num, ok := object.ToFloat(right); ok {
+		return &object.Float{Value: -num.Value}
 	}
 
 	return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, "-", right.Type())

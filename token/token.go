@@ -14,10 +14,11 @@ const (
 	IDENTIFIER
 	ASSIGNMENT
 
-	INT
+	FLOAT
 
 	SEMICOLON
 	COMMA
+	PERIOD
 	LPAREN
 	RPAREN
 
@@ -36,11 +37,12 @@ var tokenNames = []string{
 	"IDENTIFIER", // IDENTIFIER
 	"ASSIGNMENT", // ASSIGNMENT
 
-	"INT", // INT
+	"FLOAT", // INT
 
 	/* DELIMITERS */
 	";", // SEMICOLON
 	",", //	COMMA
+	".", // PERIOD
 	"(", //	LPAREN
 	")", //	RPAREN
 

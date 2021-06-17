@@ -61,7 +61,7 @@ func New(l *lexer.Lexer) *Parser {
 	}
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
-	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 
@@ -106,13 +106,13 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
 }
 
-func (p *Parser) parseIntegerLiteral() ast.Expression {
+func (p *Parser) parseFloatLiteral() ast.Expression {
 	lit := p.currToken.Literal
-	if val, err := strconv.ParseInt(lit, 0, 64); err == nil {
-		return &ast.IntegerLiteral{Token: p.currToken, Value: val}
+	if val, err := strconv.ParseFloat(lit, 64); err == nil {
+		return &ast.FloatLiteral{Token: p.currToken, Value: val}
 	}
 
-	p.integerParseError(lit)
+	p.floatParseError(lit)
 	return nil
 }
 
@@ -236,8 +236,8 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.addError(msg)
 }
 
-func (p *Parser) integerParseError(val string) {
-	msg := fmt.Sprintf("could not parse value %q as integer", val)
+func (p *Parser) floatParseError(val string) {
+	msg := fmt.Sprintf("could not parse value %q as float", val)
 	p.addError(msg)
 }
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const DIVIDE_BY_ZERO = "Cannot divide by zero (%d / %d)"
+const DIVIDE_BY_ZERO = "Cannot divide by zero (%v / %v)"
 
 type Integer struct {
 	Value int64
@@ -23,7 +23,7 @@ func ToInteger(o Object) (*Integer, bool) {
 	return inte, ok && o.Type() == INTEGER
 }
 
-func DivideByZeroError(x1, x2 int64) *Error {
+func DivideByZeroError(x1, x2 fmt.Stringer) *Error {
 	msg := fmt.Sprintf(DIVIDE_BY_ZERO, x1, x2)
 	return &Error{Message: msg}
 }

@@ -20,10 +20,17 @@ func TestString(t *testing.T) {
 					Value: "x2",
 				},
 			},
+			&ExpressionStatement{
+				Token: token.Token{Type: token.FLOAT, Literal: "0.5"},
+				Expression: &FloatLiteral{
+					Token: token.Token{Type: token.FLOAT, Literal: "0.5"},
+					Value: 0.5,
+				},
+			},
 		},
 	}
 
-	expected := "x1 = x2;"
+	expected := "x1 = x2;0.5"
 	actual := program.String()
 	testingutils.Equals(t, expected, actual, "program.String()")
 }

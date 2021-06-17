@@ -35,7 +35,7 @@ func TestErrorHandling(t *testing.T) {
 func TestAnsExpression(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected int64
+		expected float64
 	}{
 		{"a = 5; a;", 5},
 		{"a = 5 * 5; a;", 25},
@@ -49,7 +49,7 @@ func TestAnsExpression(t *testing.T) {
 		program = parseInput(ANS)
 		res := env.Eval(program)
 
-		testIntegerObject(t, res, tt.expected)
+		testFloatObject(t, res, tt.expected)
 	}
 
 }
@@ -63,28 +63,28 @@ func parseInput(input string) *ast.Program {
 func TestAssignmentStatement(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected int64
+		expected float64
 	}{
 		{"a = 5; a;", 5},
 		{"a = 5 * 5; a;", 25},
-		{"a = 5; b = a; b;", 5},
-		{"a = 5; b = a; c = a + b + 5; c;", 15},
+		{"a = 5.5; b = a; b;", 5.5},
+		{"a = 5.5; b = a; c = a + b + 5; c;", 16},
 	}
 	for _, tt := range tests {
-		testIntegerObject(t, testEval(tt.input), tt.expected)
+		testFloatObject(t, testEval(tt.input), tt.expected)
 	}
 }
 
-func TestEvalIntegerExpression(t *testing.T) {
+func TestEvalFloatExpression(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected int64
+		expected float64
 	}{
 		{"5", 5},
-		{"10", 10},
+		{"10.5", 10.5},
 		{"999", 999},
 		{"-999", -999},
-		{"-10", -10},
+		{"-10.5", -10.5},
 		{"-5", -5},
 		{"5 + 5 + 5 + 5 - 10", 10},
 		{"2 * 2 * 2 * 2 * 2", 32},
@@ -95,13 +95,13 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"50 / 2 * 2 + 10", 60},
 		{"2 * (5 + 10)", 30},
 		{"3 * 3 * 3 + 10", 37},
-		{"3 * (3 * 3) + 10", 37},
+		{"3 * (3 * 3) + 10.5", 37.5},
 		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testIntegerObject(t, evaluated, tt.expected)
+		testFloatObject(t, evaluated, tt.expected)
 	}
 }
 
@@ -113,8 +113,8 @@ func testEval(input string) object.Object {
 	return env.Eval(program)
 }
 
-func testIntegerObject(t *testing.T, obj object.Object, expected int64) {
-	result, ok := obj.(*object.Integer)
-	testingutils.Assert(t, ok, "obj is not %s, got %T (%+v)", object.INTEGER, obj, obj)
+func testFloatObject(t *testing.T, obj object.Object, expected float64) {
+	result, ok := obj.(*object.Float)
+	testingutils.Assert(t, ok, "obj is not %s, got %T (%+v)", object.FLOAT, obj, obj)
 	testingutils.Equals(t, expected, result.Value, "result.Value")
 }

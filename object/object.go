@@ -1,6 +1,7 @@
 package object
 
 type ObjectType byte
+
 type Object interface {
 	Type() ObjectType
 	String() string
@@ -9,12 +10,14 @@ type Object interface {
 const (
 	NULL ObjectType = iota
 	INTEGER
+	FLOAT
 	ERROR
 )
 
 var typeNames = []string{
 	"Null",
 	"Int",
+	"Float",
 	"Error",
 }
 

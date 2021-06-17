@@ -28,6 +28,7 @@ func TestAssignmentStatements(t *testing.T) {
 x = 15;
 y = 20;
 x123 = 99999;
+x= 0.5;
 `
 	l := lexer.New(input)
 	p := New(l)
@@ -35,7 +36,7 @@ x123 = 99999;
 
 	testingutils.Assert(t, program != nil, "ParseProgram() returned nil")
 	assertNoParseErrors(t, p)
-	testingutils.Assert(t, len(program.Statements) == 3, "program.Statements does not contain 3 statement. got=%d", len(program.Statements))
+	testingutils.Assert(t, len(program.Statements) == 4, "program.Statements does not contain 3 statement. got=%d", len(program.Statements))
 
 	tests := []struct {
 		expectedIdentifier string
@@ -43,6 +44,7 @@ x123 = 99999;
 		{"x"},
 		{"y"},
 		{"x123"},
+		{"x"},
 	}
 
 	for i, tt := range tests {
@@ -75,8 +77,8 @@ func TestIdentifierExpression(t *testing.T) {
 	testingutils.Equals(t, exp, ident.TokenLiteral(), "ident.TokenLiteral()")
 }
 
-func TestIntegerLiteralExpression(t *testing.T) {
-	input := "10;"
+func TestFloatLiteralExpression(t *testing.T) {
+	input := "0.1;"
 	l := lexer.New(input)
 	p := New(l)
 	program := p.ParseProgram()
@@ -86,12 +88,12 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
-	exp := int64(10)
-	testingutils.Assert(t, ok, "stmt not *ast.IntegerLiteral. got=%T", stmt.Expression)
+	literal, ok := stmt.Expression.(*ast.FloatLiteral)
+	exp := float64(0.1)
+	testingutils.Assert(t, ok, "stmt not *ast.FloatLiteral. got=%T", stmt.Expression)
 	testingutils.Equals(t, exp, literal.Value, "literal.Value")
 
-	exp2 := "10"
+	exp2 := "0.1"
 	testingutils.Equals(t, exp2, literal.TokenLiteral(), "literal.TokenLiteral()")
 }
 
@@ -111,9 +113,11 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
 		input      string
 		operator   string
-		rightValue int64
+		rightValue float64
 	}{
 		{"-15;", "-", 15},
+		{"-.5;", "-", 0.5},
+		{"-0.5;", "-", 0.5},
 	}
 	for _, tt := range prefixTests {
 		l := lexer.New(tt.input)
@@ -129,7 +133,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		testingutils.Assert(t, ok, "stmt.Expression not *ast.PrefixExpression. got=%T", stmt.Expression)
 		testingutils.Equals(t, tt.operator, exp.Operator, "exp.Operator")
 
-		testIntegerLiteral(t, exp.Right, tt.rightValue)
+		testFloatLiteral(t, exp.Right, tt.rightValue)
 	}
 }
 
@@ -137,10 +141,10 @@ func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
 		operator   string
-		leftValue  int64
-		rightValue int64
+		leftValue  float64
+		rightValue float64
 	}{
-		{"15 - 15;", "-", 15, 15},
+		{"0.2 - 15;", "-", 0.2, 15},
 		{"15 + 15;", "+", 15, 15},
 		{"15 * 15;", "*", 15, 15},
 		{"15 / 15;", "/", 15, 15},
@@ -159,16 +163,16 @@ func TestParsingInfixExpressions(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
 		testingutils.Assert(t, ok, "stmt.Expression not *ast.PrefixExpression. got=%T", stmt.Expression)
 		testingutils.Equals(t, it.operator, exp.Operator, "exp.Operator")
-		testIntegerLiteral(t, exp.Right, it.rightValue)
-		testIntegerLiteral(t, exp.Left, it.leftValue)
+		testFloatLiteral(t, exp.Right, it.rightValue)
+		testFloatLiteral(t, exp.Left, it.leftValue)
 	}
 }
 
-func testIntegerLiteral(t *testing.T, exp ast.Expression, value int64) {
-	integ, ok := exp.(*ast.IntegerLiteral)
-	testingutils.Assert(t, ok, "exp not *ast.IntegerLiteral. got=%T", exp)
-	testingutils.Equals(t, value, integ.Value, "integ.Value")
-	testingutils.Equals(t, fmt.Sprintf("%d", value), integ.TokenLiteral(), "integ.TokenLiteral()")
+func testFloatLiteral(t *testing.T, exp ast.Expression, value float64) {
+	num, ok := exp.(*ast.FloatLiteral)
+	testingutils.Assert(t, ok, "exp not *ast.FloatLiteral. got=%T", exp)
+	testingutils.Equals(t, value, num.Value, "num.Value")
+	testingutils.Equals(t, fmt.Sprint(value), num.TokenLiteral(), "num.TokenLiteral()")
 }
 
 func TestOperatorPrecedenceParsing(t *testing.T) {
@@ -223,6 +227,10 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		{
 			"3 + 4; -5 * 5",
 			"(3 + 4)((-5) * 5)",
+		},
+		{
+			"3.05 + 4; -5.3 * 5.33",
+			"(3.05 + 4)((-5.3) * 5.33)",
 		},
 	}
 

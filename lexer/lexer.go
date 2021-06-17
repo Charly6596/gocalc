@@ -33,7 +33,11 @@ func (l *Lexer) NextToken() token.Token {
 	l.eatWhitespaces()
 
 	if isDigit(l.ch) {
-		return token.Token{Type: token.INT, Literal: l.readWhile(isDigit)}
+		res := l.readWhile(isDigit)
+		if res[0] == '.' {
+			res = "0" + res
+		}
+		return token.Token{Type: token.FLOAT, Literal: res}
 	}
 
 	if isLetter(l.ch) {
@@ -82,7 +86,7 @@ func (l *Lexer) readWhile(pred bytePredicate) string {
 }
 
 func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
+	return '0' <= ch && ch <= '9' || ch == '.'
 }
 
 func isLetter(ch byte) bool {
