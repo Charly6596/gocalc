@@ -18,6 +18,10 @@ func (i *Integer) Type() ObjectType {
 	return INTEGER
 }
 
+func (i *Integer) TypeS() string {
+	return i.Type().Stringf(i.String())
+}
+
 func ToInteger(o Object) (*Integer, bool) {
 	inte, ok := o.(*Integer)
 	return inte, ok && o.Type() == INTEGER

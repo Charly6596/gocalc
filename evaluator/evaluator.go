@@ -22,10 +22,38 @@ type Evaluator struct {
 	parser *parser.Parser
 }
 
+// TODO: Libraries
+var (
+	n_typeof  = &object.NativeFunction{Function: nativeTypeof, Name: "typeof"}
+	n_typeofS = &object.NativeFunction{Function: nativeTypeofS, Name: "typeofS"}
+)
+
 func New() *Evaluator {
 	ev := &Evaluator{}
 	ev.global = environment.New()
+
+	// TODO: Libraries
+	ev.global.Set("typeof", n_typeof)
+	ev.global.Set("typeofS", n_typeofS)
 	return ev
+}
+
+// TODO: Libraries, return multiple values
+func nativeTypeofS(objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return &object.String{Value: object.NATIVE_FUNCTION.Stringf("typeofS")}
+	}
+	obj := objs[0]
+	return &object.String{Value: obj.TypeS()}
+}
+
+// TODO: Libraries, return multiple values
+func nativeTypeof(objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return &object.Type{Value: object.NATIVE_FUNCTION}
+	}
+	obj := objs[0]
+	return &object.Type{Value: obj.Type()}
 }
 
 func (ev *Evaluator) Eval(input string) object.Object {
@@ -120,7 +148,35 @@ func (ev *Evaluator) CallExpression(ce *ast.CallExpression) object.Object {
 		return newError(object.IDENTIFIER_NOT_FOUND_ERROR, ce.Function.TokenLiteral())
 	}
 
+	switch fn := val.(type) {
+	case *object.NativeFunction:
+		args := ev.evalExpressions(ce.Arguments)
+		return fn.Function(args...)
+	}
+
 	return val
+}
+
+func getError(objs []object.Object) (err object.Object, ok bool) {
+	ok = true
+	if len(objs) == 1 && objs[0].Type() == object.ERROR {
+		ok = false
+		err = objs[0]
+	}
+
+	return
+}
+
+func (ev *Evaluator) evalExpressions(expressions []ast.Expression) (result []object.Object) {
+	for _, e := range expressions {
+		exp := ev.evaluate(e)
+		if isError(exp) {
+			return []object.Object{exp}
+		}
+		result = append(result, exp)
+	}
+
+	return
 }
 
 func (ev *Evaluator) evaluate(node ast.Node) object.Object {

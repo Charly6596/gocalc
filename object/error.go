@@ -1,7 +1,5 @@
 package object
 
-import "fmt"
-
 const (
 	UNKNOWN_INFIX_OPERATOR_ERROR  = "Unknown operator %s %s %s"
 	UNKNOWN_PREFIX_OPERATOR_ERROR = "Unknown operator %s%s"
@@ -14,4 +12,5 @@ type Error struct {
 }
 
 func (e *Error) Type() ObjectType { return ERROR }
-func (e *Error) String() string   { return fmt.Sprintf("%s", e.Message) }
+func (e *Error) TypeS() string    { return e.Type().Stringf(e.Message) }
+func (e *Error) String() string   { return e.Message }

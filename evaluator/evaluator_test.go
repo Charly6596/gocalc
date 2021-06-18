@@ -7,6 +7,28 @@ import (
 	"testing"
 )
 
+func TestNativeFunction(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedMessage string
+	}{
+		{
+			"typeof(5 / 0)",
+			object.ERROR.String(),
+		},
+		{
+			"typeof(5)",
+			object.FLOAT.String(),
+		},
+	}
+	for i, tt := range tests {
+		evaluated := testEval(tt.input)
+		typeObj, ok := evaluated.(*object.Type)
+		testingutils.Assert(t, ok, "%d: no type object returned, got %T", i, evaluated)
+		testingutils.Equals(t, tt.expectedMessage, typeObj.Value.String(), "Typeof message")
+	}
+}
+
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
 		input           string
