@@ -1,6 +1,9 @@
 package environment
 
-import "gocalc/object"
+import (
+	"bytes"
+	"gocalc/object"
+)
 
 type Environment struct {
 	store map[string]object.Object
@@ -19,4 +22,20 @@ func (e *Environment) Get(ident string) (object.Object, bool) {
 func (e *Environment) Set(name string, obj object.Object) object.Object {
 	e.store[name] = obj
 	return obj
+}
+
+func (e *Environment) String() string {
+	var buff bytes.Buffer
+
+	buff.WriteString("Environment inspection")
+	for name, value := range e.store {
+		buff.WriteString("\n\t")
+		buff.WriteString(name)
+		buff.WriteString(": ")
+		buff.WriteString(value.String())
+		buff.WriteString(" <")
+		buff.WriteString(value.Type().String())
+		buff.WriteString(">")
+	}
+	return buff.String()
 }

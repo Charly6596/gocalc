@@ -24,22 +24,94 @@ type Evaluator struct {
 
 // TODO: Libraries
 var (
-	n_typeof  = &object.NativeFunction{Function: nativeTypeof, Name: "typeof"}
-	n_typeofS = &object.NativeFunction{Function: nativeTypeofS, Name: "typeofS"}
+	// native functions
+	nf_typeof  = newNativeFunction(nativeTypeof, "typeof")
+	nf_typeofS = newNativeFunction(nativeTypeofS, "typeofS")
+	nf_inspect = newNativeFunction(nativeInspect, "inspect")
+
+	mathfn_sin   = newNativeFunction(math2NativeFn(math.Sin), "sin")
+	mathfn_cos   = newNativeFunction(math2NativeFn(math.Cos), "cos")
+	mathfn_ln    = newNativeFunction(math2NativeFn(math.Log), "ln")
+	mathfn_log2  = newNativeFunction(math2NativeFn(math.Log2), "log2")
+	mathfn_log10 = newNativeFunction(math2NativeFn(math.Log10), "log10")
+	mathfn_sqrt  = newNativeFunction(math2NativeFn(math.Sqrt), "sqrt")
+	mathc_e      = newFloat(math.E)
+	mathc_pi     = newFloat(math.Pi)
+	mathc_phi    = newFloat(math.Phi)
 )
+
+func newNativeFunction(fn NativeFn, name string) *NativeFunction {
+	return &NativeFunction{Function: fn, Name: name}
+}
+
+func newFloat(val float64) *object.Float {
+	return &object.Float{Value: val}
+}
 
 func New() *Evaluator {
 	ev := &Evaluator{}
 	ev.global = environment.New()
 
 	// TODO: Libraries
-	ev.global.Set("typeof", n_typeof)
-	ev.global.Set("typeofS", n_typeofS)
+	ev.global.Set("typeof", nf_typeof)
+	ev.global.Set("typeofS", nf_typeofS)
+	ev.global.Set("inspect", nf_inspect)
+	ev.global.Set("ln", mathfn_ln)
+	ev.global.Set("log2", mathfn_log2)
+	ev.global.Set("log10", mathfn_log10)
+	ev.global.Set("log", mathfn_log10)
+	ev.global.Set("sqrt", mathfn_sqrt)
+	ev.global.Set("sin", mathfn_sin)
+	ev.global.Set("cos", mathfn_cos)
+	ev.global.Set("e", mathc_e)
+	ev.global.Set("pi", mathc_pi)
+	ev.global.Set("phi", mathc_phi)
 	return ev
 }
 
 // TODO: Libraries, return multiple values
-func nativeTypeofS(objs ...object.Object) object.Object {
+func mathSin(ev *Evaluator, objs ...object.Object) object.Object {
+	num, ok := objs[0].(*object.Float)
+	if !ok {
+		// TODO: handle error
+		return NULL
+	}
+
+	return &object.Float{Value: math.Sin(num.Value)}
+}
+
+type mathFn func(float64) float64
+
+func math2NativeFn(fn mathFn) NativeFn {
+	return func(ev *Evaluator, objs ...object.Object) object.Object {
+		num, ok := objs[0].(*object.Float)
+		if !ok {
+			// TODO: handle error
+			return NULL
+		}
+		return &object.Float{Value: fn(num.Value)}
+	}
+}
+
+func mathLog(ev *Evaluator, objs ...object.Object) object.Object {
+	num, ok := objs[0].(*object.Float)
+	if !ok {
+		// TODO: handle error
+		return NULL
+	}
+	return &object.Float{Value: math.Log(num.Value)}
+}
+
+func nativeInspect(ev *Evaluator, objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return object.NewString(fmt.Sprint(ev.global))
+	}
+
+	// TODO: take string argument and inspect that function
+	return NULL
+}
+
+func nativeTypeofS(ev *Evaluator, objs ...object.Object) object.Object {
 	if len(objs) == 0 {
 		return &object.String{Value: object.NATIVE_FUNCTION.Stringf("typeofS")}
 	}
@@ -47,8 +119,7 @@ func nativeTypeofS(objs ...object.Object) object.Object {
 	return &object.String{Value: obj.TypeS()}
 }
 
-// TODO: Libraries, return multiple values
-func nativeTypeof(objs ...object.Object) object.Object {
+func nativeTypeof(ev *Evaluator, objs ...object.Object) object.Object {
 	if len(objs) == 0 {
 		return &object.Type{Value: object.NATIVE_FUNCTION}
 	}
@@ -107,7 +178,7 @@ func (ev *Evaluator) AssignmentStatement(as *ast.AssignmentStatement) object.Obj
 
 	ev.global.Set(as.Name.Value, val)
 
-	return NULL
+	return nil
 }
 
 func (ev *Evaluator) ExpressionStatement(es *ast.ExpressionStatement) object.Object {
@@ -149,9 +220,9 @@ func (ev *Evaluator) CallExpression(ce *ast.CallExpression) object.Object {
 	}
 
 	switch fn := val.(type) {
-	case *object.NativeFunction:
+	case *NativeFunction:
 		args := ev.evalExpressions(ce.Arguments)
-		return fn.Function(args...)
+		return fn.Function(ev, args...)
 	}
 
 	return val
