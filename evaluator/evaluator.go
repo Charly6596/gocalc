@@ -170,6 +170,10 @@ func (ev *Evaluator) FloatLiteral(fl *ast.FloatLiteral) object.Object {
 	return &object.Float{Value: fl.Value}
 }
 
+func (ev *Evaluator) BooleanLiteral(fl *ast.BooleanLiteral) object.Object {
+	return &object.Boolean{Value: fl.Value}
+}
+
 func (ev *Evaluator) AssignmentStatement(as *ast.AssignmentStatement) object.Object {
 	val := ev.evaluate(as.Value)
 	if isError(val) {

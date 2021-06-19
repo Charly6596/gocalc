@@ -17,6 +17,7 @@ const (
 	NULL ObjectType = iota
 	INTEGER
 	FLOAT
+	BOOLEAN
 	NATIVE_FUNCTION
 	ERROR
 	STRING
@@ -27,6 +28,7 @@ var typeNames = []string{
 	NULL:            "Nil",
 	INTEGER:         "Int",
 	FLOAT:           "Float",
+	BOOLEAN:         "Bool",
 	ERROR:           "Err",
 	STRING:          "Str",
 	TYPE:            "Type",

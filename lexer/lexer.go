@@ -18,14 +18,21 @@ func New(input string) *Lexer {
 }
 
 func (l *Lexer) readChar() {
-	if l.nextPosition >= len(l.input) {
-		l.ch = 0
-	} else {
-		l.ch = l.input[l.nextPosition]
-	}
+	l.ch = l.peekChar()
+	l.advanceChar()
+}
 
+func (l *Lexer) advanceChar() {
 	l.position = l.nextPosition
 	l.nextPosition++
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.nextPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.nextPosition]
+	}
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -37,18 +44,35 @@ func (l *Lexer) NextToken() token.Token {
 		if res[0] == '.' {
 			res = "0" + res
 		}
-		return token.Token{Type: token.FLOAT, Literal: res}
+		return token.NewExt(token.FLOAT, res)
 	}
 
 	if isLetter(l.ch) {
-		return token.Token{Type: token.IDENT, Literal: l.readWhile(isLetter)}
+		t := token.Token{Literal: l.readWhile(isLetter)}
+		if kw, ok := token.TryGetKeyword(t.Literal); ok {
+			t.Type = kw
+		} else {
+			t.Type = token.IDENT
+		}
+
+		return t
 	}
 
 	defer l.readChar()
 
 	switch l.ch {
 	case '=':
+		if l.peekChar() == '=' {
+			l.advanceChar()
+			return token.NewExt(token.EQ, "==")
+		}
 		return token.New(token.ASSIGN, l.ch)
+	case '!':
+		if l.peekChar() == '=' {
+			l.advanceChar()
+			return token.NewExt(token.NOT_EQ, "!=")
+		}
+		return token.New(token.BANG, l.ch)
 	case ';':
 		return token.New(token.SEMICOLON, l.ch)
 	case '(':
@@ -67,8 +91,21 @@ func (l *Lexer) NextToken() token.Token {
 		return token.New(token.SLASH, l.ch)
 	case '^':
 		return token.New(token.CARET, l.ch)
+	case '>':
+		if l.peekChar() == '=' {
+			l.advanceChar()
+			return token.NewExt(token.GT_EQ, ">=")
+		}
+		return token.New(token.GT, l.ch)
+	case '<':
+		if l.peekChar() == '=' {
+			l.advanceChar()
+			return token.NewExt(token.LT_EQ, "<=")
+		}
+		return token.New(token.LT, l.ch)
+
 	case 0:
-		return token.Token{Type: token.EOF, Literal: ""}
+		return token.NewExt(token.EOF, "")
 	}
 
 	return token.New(token.ILLEGAL, l.ch)

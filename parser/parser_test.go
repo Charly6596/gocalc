@@ -116,6 +116,26 @@ func TestFloatLiteralExpression(t *testing.T) {
 	testingutils.Equals(t, exp2, literal.TokenLiteral(), "literal.TokenLiteral()")
 }
 
+func TestBooleanLiteralExpression(t *testing.T) {
+	input := "true;"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	assertNoParseErrors(t, p)
+	testingutils.Equals(t, 1, len(program.Statements), "len(program.Statements)")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	testingutils.Assert(t, ok, "program.Statements[0] not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	literal, ok := stmt.Expression.(*ast.BooleanLiteral)
+	exp := true
+	testingutils.Assert(t, ok, "stmt not *ast.BooleanLiteral. got=%T", stmt.Expression)
+	testingutils.Equals(t, exp, literal.Value, "literal.Value")
+
+	exp2 := "true"
+	testingutils.Equals(t, exp2, literal.TokenLiteral(), "literal.TokenLiteral()")
+}
+
 func assertNoParseErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 	if len(errors) == 0 {

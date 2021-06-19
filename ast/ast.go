@@ -9,6 +9,7 @@ type NodeVisitor interface {
 	Program(*Program) object.Object
 	Identifier(*Identifier) object.Object
 	FloatLiteral(*FloatLiteral) object.Object
+	BooleanLiteral(*BooleanLiteral) object.Object
 	AssignmentStatement(*AssignmentStatement) object.Object
 	ExpressionStatement(*ExpressionStatement) object.Object
 	PrefixExpression(*PrefixExpression) object.Object
