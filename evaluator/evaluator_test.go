@@ -85,6 +85,51 @@ func TestAssignmentStatement(t *testing.T) {
 	}
 }
 
+func TestEvalBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"true", true},
+		{"false", false},
+		{"!true", false},
+		{"!false", true},
+		{"true == true", true},
+		{"true != true", false},
+		{"false == false", true},
+		{"false != false", false},
+		{"true == false", false},
+		{"10 > 10", false},
+		{"10 >= 10", true},
+		{"10 <= 10", true},
+		{"10 == 10", true},
+		{"10 < 10", false},
+		{"9 < 10", true},
+		{"9 <= 10", true},
+		{"9 >= 10", false},
+		{"9 > 10", false},
+		{"!(9 > 10)", true},
+		{"!(9 <= 10)", false},
+		{"!(true && true)", false},
+		{"true && true", true},
+		{"true || false", true},
+		{"(3 > 5) || (5 < 10)", true},
+		{"(3 < 5) && (5 < 10)", true},
+		{"true && false || true", true},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func testBooleanObject(t *testing.T, obj object.Object, expected bool) {
+	result, ok := obj.(*object.Boolean)
+	testingutils.Assert(t, ok, "obj is not %s, got %T (%+v)", object.BOOLEAN, obj, obj)
+	testingutils.Equals(t, expected, result.Value, "result.Value")
+}
+
 func TestEvalFloatExpression(t *testing.T) {
 	tests := []struct {
 		input    string

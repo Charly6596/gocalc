@@ -38,6 +38,8 @@ const (
 	GT
 	LT_EQ
 	GT_EQ
+	AND // &&
+	OR  // ||
 
 	operator_end
 
@@ -81,6 +83,8 @@ var tokenNames = []string{
 	GT:       ">",
 	LT_EQ:    "<=",
 	GT_EQ:    ">=",
+	AND:      "&&",
+	OR:       "||",
 
 	// Keywords
 	IMPORT: "import",

@@ -103,7 +103,16 @@ func (l *Lexer) NextToken() token.Token {
 			return token.NewExt(token.LT_EQ, "<=")
 		}
 		return token.New(token.LT, l.ch)
-
+	case '&':
+		if l.peekChar() == '&' {
+			l.advanceChar()
+			return token.NewExt(token.AND, "&&")
+		}
+	case '|':
+		if l.peekChar() == '|' {
+			l.advanceChar()
+			return token.NewExt(token.OR, "||")
+		}
 	case 0:
 		return token.NewExt(token.EOF, "")
 	}

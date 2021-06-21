@@ -266,6 +266,8 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	switch {
 	case isFloat(left) && isFloat(right):
 		return evalInfixExpressionFloat(operator, left, right)
+	case isBoolean(left) && isBoolean(right):
+		return evalInfixExpressionBoolean(operator, left, right)
 	default:
 		return newError(object.UNKNOWN_INFIX_OPERATOR_ERROR, left.Type(), operator, right.Type())
 	}
@@ -275,24 +277,60 @@ func isFloat(obj object.Object) bool {
 	return obj.Type() == object.FLOAT
 }
 
+func isBoolean(obj object.Object) bool {
+	return obj.Type() == object.BOOLEAN
+}
+
+func evalInfixExpressionBoolean(operator string, left, right object.Object) object.Object {
+	x1, x2 := left.(*object.Boolean).Value, right.(*object.Boolean).Value
+
+	switch operator {
+	case "==":
+		return newBool(x1 == x2)
+	case "!=":
+		return newBool(x1 != x2)
+	case "&&":
+		return newBool(x1 && x2)
+	case "||":
+		return newBool(x1 || x2)
+	}
+
+	return newError(object.UNKNOWN_INFIX_OPERATOR_ERROR, left.Type(), operator, right.Type())
+}
+
+func newBool(val bool) *object.Boolean {
+	return &object.Boolean{Value: val}
+}
+
 func evalInfixExpressionFloat(operator string, left, right object.Object) object.Object {
 	x1, x2 := left.(*object.Float).Value, right.(*object.Float).Value
 
 	switch operator {
 	case "+":
-		return &object.Float{Value: x1 + x2}
+		return newFloat(x1 + x2)
 	case "-":
-		return &object.Float{Value: x1 - x2}
+		return newFloat(x1 - x2)
 	case "*":
-		return &object.Float{Value: x1 * x2}
+		return newFloat(x1 * x2)
 	case "^":
-		return &object.Float{Value: math.Pow(x1, x2)}
+		return newFloat(math.Pow(x1, x2))
 	case "/":
 		if x2 == 0 {
 			return object.DivideByZeroError(left, right)
 		}
-
-		return &object.Float{Value: x1 / x2}
+		return newFloat(x1 / x2)
+	case ">=":
+		return newBool(x1 >= x2)
+	case ">":
+		return newBool(x1 > x2)
+	case "<":
+		return newBool(x1 < x2)
+	case "<=":
+		return newBool(x1 <= x2)
+	case "==":
+		return newBool(x1 == x2)
+	case "!=":
+		return newBool(x1 != x2)
 	}
 
 	return newError(object.UNKNOWN_INFIX_OPERATOR_ERROR, left.Type(), operator, right.Type())
@@ -300,19 +338,34 @@ func evalInfixExpressionFloat(operator string, left, right object.Object) object
 }
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {
-	if operator == "-" {
-		return evalMinusOperator(right)
+	switch {
+	case isFloat(right):
+		return evalPrefixExpressionFloat(operator, right)
+	case isBoolean(right):
+		return evalPrefixExpressionBoolean(operator, right)
+	default:
+		return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, operator, right.Type())
+	}
+}
+
+func evalPrefixExpressionBoolean(operator string, right object.Object) object.Object {
+	x1 := right.(*object.Boolean).Value
+	switch operator {
+	case "!":
+		return newBool(!x1)
+	default:
+		return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, operator, right.Type())
+	}
+}
+
+func evalPrefixExpressionFloat(operator string, right object.Object) object.Object {
+	x1 := right.(*object.Float).Value
+	switch operator {
+	case "-":
+		return newFloat(-x1)
 	}
 
 	return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, operator, right.Type())
-}
-
-func evalMinusOperator(right object.Object) object.Object {
-	if num, ok := object.ToFloat(right); ok {
-		return &object.Float{Value: -num.Value}
-	}
-
-	return newError(object.UNKNOWN_PREFIX_OPERATOR_ERROR, "-", right.Type())
 }
 
 func newError(msg string, v ...interface{}) *object.Error {
