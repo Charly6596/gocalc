@@ -34,6 +34,7 @@ var precedences = map[token.TokenType]int{
 	token.AND:      BOOLEAN,
 	token.BANG:     PREFIX,
 	token.LPAREN:   CALL,
+	token.LBRACK:   CALL,
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -77,6 +78,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.LBRACK, p.parseListExpression)
 	p.registerPrefix(token.TRUE, p.parseBooleanLiteral)
 	p.registerPrefix(token.FALSE, p.parseBooleanLiteral)
 
@@ -101,20 +103,25 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+func (p *Parser) parseListExpression() ast.Expression {
+
+	return &ast.ListLiteral{Token: p.currToken, Values: p.parseExpressionList(token.RBRACK)}
+}
+
 func (p *Parser) parseBooleanLiteral() ast.Expression {
 	return &ast.BooleanLiteral{Token: p.currToken, Value: p.currToken.Type == token.TRUE}
 }
 
 func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
 	call := &ast.CallExpression{Token: p.currToken, Function: left}
-	call.Arguments = p.parseCallArguments()
+	call.Arguments = p.parseExpressionList(token.RPAREN)
 	return call
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	args := []ast.Expression{}
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.peekTokenIs(end) {
 		p.nextToken()
 		return args
 	}
@@ -127,7 +134,7 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 		args = append(args, p.parseExpression(LOWEST))
 	}
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(end) {
 		return nil
 	}
 

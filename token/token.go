@@ -25,6 +25,8 @@ const (
 	PERIOD
 	LPAREN
 	RPAREN
+	LBRACK
+	RBRACK
 	ASSIGN
 	PLUS
 	MINUS
@@ -68,6 +70,8 @@ var tokenNames = []string{
 	PERIOD:    ".",
 	LPAREN:    "(",
 	RPAREN:    ")",
+	LBRACK:    "[",
+	RBRACK:    "]",
 
 	// Operators
 	ASSIGN:   "=",

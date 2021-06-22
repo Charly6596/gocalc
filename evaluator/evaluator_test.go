@@ -130,6 +130,23 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) {
 	testingutils.Equals(t, expected, result.Value, "result.Value")
 }
 
+func TestEvalListExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{"[5]", []string{"5"}},
+		{"[true, false, 9]", []string{"True", "False", "9"}},
+		{"[5 + 5 + 5 + 5 - 10, -5]", []string{"10", "-5"}},
+		{"[true, 2 * 2 * 2 * 2 * 2]", []string{"True", "32"}},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testListObject(t, evaluated, tt.expected)
+	}
+}
+
 func TestEvalFloatExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -170,4 +187,13 @@ func testFloatObject(t *testing.T, obj object.Object, expected float64) {
 	result, ok := obj.(*object.Float)
 	testingutils.Assert(t, ok, "obj is not %s, got %T (%+v)", object.FLOAT, obj, obj)
 	testingutils.Equals(t, expected, result.Value, "result.Value")
+}
+
+func testListObject(t *testing.T, obj object.Object, expected []string) {
+	result, ok := obj.(*object.List)
+	testingutils.Assert(t, ok, "obj is not %s, got %T (%+v)", object.LIST, obj, obj)
+	testingutils.Equals(t, len(expected), len(result.Values), "len(result.Values)")
+	for i, o := range result.Values {
+		testingutils.Equals(t, expected[i], o.String(), "result.Values["+fmt.Sprint(i)+"]")
+	}
 }

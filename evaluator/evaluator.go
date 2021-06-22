@@ -28,6 +28,7 @@ var (
 	nf_typeof  = newNativeFunction(nativeTypeof, "typeof")
 	nf_typeofS = newNativeFunction(nativeTypeofS, "typeofS")
 	nf_inspect = newNativeFunction(nativeInspect, "inspect")
+	arr_len    = newNativeFunction(arrLen, "len")
 
 	mathfn_sin   = newNativeFunction(math2NativeFn(math.Sin), "sin")
 	mathfn_cos   = newNativeFunction(math2NativeFn(math.Cos), "cos")
@@ -56,6 +57,7 @@ func New() *Evaluator {
 	ev.global.Set("typeof", nf_typeof)
 	ev.global.Set("typeofS", nf_typeofS)
 	ev.global.Set("inspect", nf_inspect)
+	ev.global.Set("len", arr_len)
 	ev.global.Set("ln", mathfn_ln)
 	ev.global.Set("log2", mathfn_log2)
 	ev.global.Set("log10", mathfn_log10)
@@ -127,6 +129,20 @@ func nativeTypeof(ev *Evaluator, objs ...object.Object) object.Object {
 	return &object.Type{Value: obj.Type()}
 }
 
+func arrLen(ev *Evaluator, objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return newFloat(0)
+	}
+	obj, ok := objs[0].(*object.List)
+
+	if !ok {
+		return newError("Len can only be applied to lists. Got %s", obj.Type())
+	}
+
+	return newFloat(float64(len(obj.Values)))
+
+}
+
 func (ev *Evaluator) Eval(input string) object.Object {
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
@@ -183,6 +199,10 @@ func (ev *Evaluator) AssignmentStatement(as *ast.AssignmentStatement) object.Obj
 	ev.global.Set(as.Name.Value, val)
 
 	return nil
+}
+
+func (ev *Evaluator) ListLiteral(ll *ast.ListLiteral) object.Object {
+	return &object.List{Values: ev.evalExpressions(ll.Values)}
 }
 
 func (ev *Evaluator) ExpressionStatement(es *ast.ExpressionStatement) object.Object {

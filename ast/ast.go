@@ -8,6 +8,7 @@ import (
 type NodeVisitor interface {
 	Program(*Program) object.Object
 	Identifier(*Identifier) object.Object
+	ListLiteral(*ListLiteral) object.Object
 	FloatLiteral(*FloatLiteral) object.Object
 	BooleanLiteral(*BooleanLiteral) object.Object
 	AssignmentStatement(*AssignmentStatement) object.Object

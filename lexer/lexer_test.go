@@ -8,7 +8,8 @@ import (
 func TestNextToken(t *testing.T) {
 	input := `
 x1 = 3 + 5^3; (3 * 8 ); x1; 0.5; .5 > @; 
-    abc != true   ; true && false || false
+    abc != true   ; true && false || false;
+    [true, false]
     `
 	tests := []struct {
 		expectedType    token.TokenType
@@ -45,6 +46,12 @@ x1 = 3 + 5^3; (3 * 8 ); x1; 0.5; .5 > @;
 		{token.FALSE, "false"},
 		{token.OR, "||"},
 		{token.FALSE, "false"},
+		{token.SEMICOLON, ";"},
+		{token.LBRACK, "["},
+		{token.TRUE, "true"},
+		{token.COMMA, ","},
+		{token.FALSE, "false"},
+		{token.RBRACK, "]"},
 		{token.EOF, ""},
 	}
 	l := New(input)

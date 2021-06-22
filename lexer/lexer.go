@@ -61,6 +61,10 @@ func (l *Lexer) NextToken() token.Token {
 	defer l.readChar()
 
 	switch l.ch {
+	case '[':
+		return token.New(token.LBRACK, '[')
+	case ']':
+		return token.New(token.RBRACK, ']')
 	case '=':
 		if l.peekChar() == '=' {
 			l.advanceChar()

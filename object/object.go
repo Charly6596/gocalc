@@ -22,6 +22,7 @@ const (
 	ERROR
 	STRING
 	TYPE
+	LIST
 )
 
 var typeNames = []string{
@@ -33,6 +34,7 @@ var typeNames = []string{
 	STRING:          "Str",
 	TYPE:            "Type",
 	NATIVE_FUNCTION: "NativeFn",
+	LIST:            "List",
 }
 
 func (o ObjectType) String() string { return typeNames[o] }
