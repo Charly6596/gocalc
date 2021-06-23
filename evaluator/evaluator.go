@@ -23,23 +23,28 @@ type Evaluator struct {
 }
 
 // TODO: Libraries
-var (
-	// native functions
-	nf_typeof  = newNativeFunction(nativeTypeof, "typeof")
-	nf_typeofS = newNativeFunction(nativeTypeofS, "typeofS")
-	nf_inspect = newNativeFunction(nativeInspect, "inspect")
-	arr_len    = newNativeFunction(arrLen, "len")
+var nativelib = map[string]object.Object{
+	"typeof":  newNativeFunction(nativeTypeof, "typeof"),
+	"typeofS": newNativeFunction(nativeTypeofS, "typeofS"),
+	"inspect": newNativeFunction(nativeInspect, "inspect"),
 
-	mathfn_sin   = newNativeFunction(math2NativeFn(math.Sin), "sin")
-	mathfn_cos   = newNativeFunction(math2NativeFn(math.Cos), "cos")
-	mathfn_ln    = newNativeFunction(math2NativeFn(math.Log), "ln")
-	mathfn_log2  = newNativeFunction(math2NativeFn(math.Log2), "log2")
-	mathfn_log10 = newNativeFunction(math2NativeFn(math.Log10), "log10")
-	mathfn_sqrt  = newNativeFunction(math2NativeFn(math.Sqrt), "sqrt")
-	mathc_e      = newFloat(math.E)
-	mathc_pi     = newFloat(math.Pi)
-	mathc_phi    = newFloat(math.Phi)
-)
+	// arrays
+	"len":  newNativeFunction(arrLen, "len"),
+	"get":  newNativeFunction(arrGet, "get"),
+	"head": newNativeFunction(arrHead, "head"),
+	"tail": newNativeFunction(arrTail, "tail"),
+
+	// math
+	"sin":   newNativeFunction(math2NativeFn(math.Sin), "sin"),
+	"cos":   newNativeFunction(math2NativeFn(math.Cos), "cos"),
+	"ln":    newNativeFunction(math2NativeFn(math.Log), "ln"),
+	"log2":  newNativeFunction(math2NativeFn(math.Log2), "log2"),
+	"log10": newNativeFunction(math2NativeFn(math.Log10), "log10"),
+	"sqrt":  newNativeFunction(math2NativeFn(math.Sqrt), "sqrt"),
+	"e":     newFloat(math.E),
+	"pi":    newFloat(math.Pi),
+	"phi":   newFloat(math.Phi),
+}
 
 func newNativeFunction(fn NativeFn, name string) *NativeFunction {
 	return &NativeFunction{Function: fn, Name: name}
@@ -53,21 +58,10 @@ func New() *Evaluator {
 	ev := &Evaluator{}
 	ev.global = environment.New()
 
-	// TODO: Libraries
-	ev.global.Set("typeof", nf_typeof)
-	ev.global.Set("typeofS", nf_typeofS)
-	ev.global.Set("inspect", nf_inspect)
-	ev.global.Set("len", arr_len)
-	ev.global.Set("ln", mathfn_ln)
-	ev.global.Set("log2", mathfn_log2)
-	ev.global.Set("log10", mathfn_log10)
-	ev.global.Set("log", mathfn_log10)
-	ev.global.Set("sqrt", mathfn_sqrt)
-	ev.global.Set("sin", mathfn_sin)
-	ev.global.Set("cos", mathfn_cos)
-	ev.global.Set("e", mathc_e)
-	ev.global.Set("pi", mathc_pi)
-	ev.global.Set("phi", mathc_phi)
+	for name, nf := range nativelib {
+		ev.global.Set(name, nf)
+	}
+
 	return ev
 }
 
@@ -127,6 +121,60 @@ func nativeTypeof(ev *Evaluator, objs ...object.Object) object.Object {
 	}
 	obj := objs[0]
 	return &object.Type{Value: obj.Type()}
+}
+
+func arrHead(ev *Evaluator, objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return NULL
+	}
+	obj, ok := objs[0].(*object.List)
+
+	if !ok {
+		return newError("Len can only be applied to lists. Got %s", obj.Type())
+	}
+
+	return _arrGet(obj, 0)
+}
+
+func arrTail(ev *Evaluator, objs ...object.Object) object.Object {
+	if len(objs) == 0 {
+		return NULL
+	}
+	obj, ok := objs[0].(*object.List)
+
+	if !ok {
+		return newError("Len can only be applied to lists. Got %s", obj.Type())
+	}
+
+	return _arrGet(obj, len(obj.Values)-1)
+}
+
+func arrGet(ev *Evaluator, objs ...object.Object) object.Object {
+	if len(objs) < 2 {
+		return NULL
+	}
+
+	list, ok := objs[0].(*object.List)
+
+	if !ok {
+		return newError("get can only be applied to lists. Got %s", list.Type())
+	}
+
+	index, ok := objs[1].(*object.Float)
+
+	if !ok {
+		return newError("Second argument must be of type %s", object.FLOAT)
+	}
+
+	return _arrGet(list, int(index.Value))
+}
+
+func _arrGet(list *object.List, index int) object.Object {
+	if len(list.Values) <= index {
+		return newError("Index %d not found (len = %d)", index, len(list.Values))
+	}
+
+	return list.Values[index]
 }
 
 func arrLen(ev *Evaluator, objs ...object.Object) object.Object {

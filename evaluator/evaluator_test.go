@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNativeFunction(t *testing.T) {
+func TestStdlib(t *testing.T) {
 	tests := []struct {
 		input           string
 		expectedMessage string
@@ -20,12 +20,34 @@ func TestNativeFunction(t *testing.T) {
 			"typeof(5)",
 			object.FLOAT.String(),
 		},
+		{
+			"len([])",
+			"0",
+		},
+		{
+			"len([1, true])",
+			"2",
+		},
+		{
+			"head([1, true])",
+			"1",
+		},
+		{
+			"tail([1, true])",
+			"True",
+		},
+		{
+			"get([1, true], 1)",
+			"True",
+		},
+		{
+			"get([1, true], 0)",
+			"1",
+		},
 	}
-	for i, tt := range tests {
+	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		typeObj, ok := evaluated.(*object.Type)
-		testingutils.Assert(t, ok, "%d: no type object returned, got %T", i, evaluated)
-		testingutils.Equals(t, tt.expectedMessage, typeObj.Value.String(), "Typeof message")
+		testingutils.Equals(t, tt.expectedMessage, evaluated.String(), "response")
 	}
 }
 
