@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+        <style>
+            #stdout {
+                max-height: 300px;
+                min-height: 300px;
+                overflow-y: auto;
+                padding: 5px;
+                border: double;
+            }
+            #console {
+                margin: 0 auto;
+                max-width: 600px;
+            }
+
+            #stdin {
+                width: 90%;
+                border: 0;
+            }
+            #stdin:focus-visible {
+                outline: unset
+            }
+            .prompt {
+                width: 10%
+            }
+            .input {
+                border: double;
+                margin-top: .5rem;
+                padding: 2px;
+            }
+        </style>
+		<script src="wasm_exec.js"></script>
+		<script>
+			const go = new Go();
+			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+			});
+		</script>
+	</head>
+	<body>
+        <div id="console">
+            <div id="stdout"></div>
+            <div class="input">
+                <span class="prompt">&gt;&gt;&gt;</span>
+                <input id="stdin" placeholder="Write inspect() to inspect the environment" />
+            </div>
+        </div>
+    </body>
+</html>
